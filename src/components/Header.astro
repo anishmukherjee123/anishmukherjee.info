@@ -7,15 +7,16 @@ import HeaderTab from './HeaderTab.astro';
 <header>
   <div class="navbar bg-base-300">
     <div class="flex-none">
-      <a href="/" class="btn btn-ghost text-xl">Anish Mukherjee</a>
+      <a href="/" class="btn btn-ghost text-xl hover:text-success"
+        >Anish Mukherjee</a
+      >
     </div>
     <div class="flex-auto">
-      <div role="tablist" class="tabs tabs-bordered px-3">
-        <HeaderTab href="/" class="tab">Home</HeaderTab>
-        <HeaderTab href="/blog" class="tab">Blog</HeaderTab>
-        <HeaderTab href="/photography" class="tab">Photography</HeaderTab>
-        <HeaderTab href="/about" class="tab">About</HeaderTab>
-      </div>
+      <div role="tablist" class="tabs tabs-bordered px-3"></div>
+      <HeaderTab href="/">Home</HeaderTab>
+      <HeaderTab href="/blog">Blog</HeaderTab>
+      <HeaderTab href="/photography">Photography</HeaderTab>
+      <HeaderTab href="/about">About</HeaderTab>
     </div>
   </div>
 </header>
