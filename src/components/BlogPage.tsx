@@ -1,33 +1,24 @@
 import React from "react";
 import "bootstrap/dist/css/bootstrap.css";
-import { Navbar } from "./Navbar";
-import { Footer } from "./Footer";
 import 'animate.css';
+import { BlogPost } from "./BlogPost";
+import { Col, Container, Row } from "react-bootstrap";
 
-function BlogPage(): JSX.Element {
+export function BlogPage(): JSX.Element {
   return (
-    <div className=".bg-light.bg-gradient">
-      <div className="container-fluid my-3">
-        <div className="row align-items-start">
-          <div className="col-2">
-            Filler text
-          </div>
-          <div className="col-7">
-            <div className="animate__animated animate__fadeInUp">
-              <p className="h1 fw-bolder font-monospace">Welcome!</p>
-              <hr className="border border-primary border-3 opacity-75"/>
-            </div>
-            Welcome to my home page! As you can see it's a work in progress ;)
-            <br></br>
-            But just in case you want to get in touch, you can reach me at <span className="fw-bold">me@anishmukherjee.info</span>!
-          </div>
-          <div className="col-2">
-            WIP!
-          </div>
-        </div>
-      </div>
-    </div>
+    <Container fluid className="my-3 bg-white">
+      <Row className="align-items-start">
+        <Col xs={2}>
+          WIP
+        </Col>
+        <Col xs={7}>
+          <BlogPost title="Welcome to my blog!" content="This is a blog post. It's a work in progress, but I'm excited to share my thoughts with you!" author="Anish Mukherjee" date="04/07/2024"/>
+          <BlogPost title="Second Post!" content="This is a blog post. It's a work in progress, but I'm excited to share my thoughts with you!" author="Anish Mukherjee" date="04/07/2024"/>
+        </Col>
+        <Col xs={2}>
+          WIP
+        </Col>
+      </Row>
+    </Container>
   );
 }
-
-export default BlogPage;
