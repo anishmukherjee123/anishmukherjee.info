@@ -1,5 +1,4 @@
+node_modules
 old_builds/*
 build/*
 deploy.sh
-node_modules/*
-node_modeuls/.cache/*
