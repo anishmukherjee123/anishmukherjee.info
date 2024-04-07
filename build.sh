@@ -3,5 +3,5 @@ IMAGE_TAG="latest"
 docker-compose build
 
 # then build tagged version
-IMAGE_TAG="0.0.3"
+IMAGE_TAG="0.0.4"
 docker-compose build
