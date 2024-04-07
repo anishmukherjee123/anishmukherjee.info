@@ -8,13 +8,38 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import ErrorPage from './ErrorPage';
+import HomePage from './components/HomePage';
+import BlogPage from './components/BlogPage';
+import { Outlet } from "react-router-dom";
+import { Navbar } from './components/Navbar';
+import { Footer } from './components/Footer';
+
+function Layout() {
+  return (
+      <>
+        <Navbar />
+        <Outlet />
+        <Footer />
+      </>
+  );
+}
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <App />,
-    errorElement: <ErrorPage />
-  },
+    element: <Layout/>,
+    errorElement: <ErrorPage />,
+    children: [  
+    {
+      path: "/",
+      element: <HomePage />,
+      errorElement: <ErrorPage />
+    },
+    {
+      path: "/blog",
+      element: <BlogPage />,
+      errorElement: <ErrorPage />
+    }]
+  }
 ]);
 
 const root = ReactDOM.createRoot(
@@ -25,6 +50,7 @@ root.render(
     <RouterProvider router={router} />
   </React.StrictMode>
 );
+
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))

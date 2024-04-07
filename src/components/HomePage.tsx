@@ -8,7 +8,6 @@ import 'animate.css';
 function HomePage(): JSX.Element {
   return (
     <div className=".bg-light.bg-gradient">
-      <Navbar/>
       <div className="container-fluid my-3">
         <div className="row align-items-start">
           <div className="col-2">
@@ -28,7 +27,6 @@ function HomePage(): JSX.Element {
           </div>
         </div>
       </div>
-      <Footer/>
     </div>
   );
 }

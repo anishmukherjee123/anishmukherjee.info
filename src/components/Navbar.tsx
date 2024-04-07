@@ -12,13 +12,16 @@ export function Navbar(): JSX.Element {
                     <a className="nav-link" aria-current="page" href="/">About Me</a>
                     </li>
                     <li className="nav-item px-2">
-                    <a className="nav-link" aria-current="page" href="/">Blog</a>
+                    <a className="nav-link" aria-current="page" href="/blog">Blog</a>
                     </li>
                     <li className="nav-item px-2">
-                    <a className="nav-link" aria-current="page" href="/">Projects</a>
+                    <a className="nav-link" aria-current="page" href="/photography">Photography</a>
                     </li>
                     <li className="nav-item px-2">
-                    <a className="nav-link" aria-current="page" href="/">Contact Info</a>
+                    <a className="nav-link" aria-current="page" href="/projects">Projects</a>
+                    </li>
+                    <li className="nav-item px-2">
+                    <a className="nav-link" aria-current="page" href="/contact">Contact Info</a>
                     </li>
                 </ul>
                 </div>
