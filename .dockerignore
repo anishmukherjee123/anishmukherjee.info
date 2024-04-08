@@ -3,3 +3,5 @@
 deploy.sh
 build
 old_builds
+.vscode
+.prettierrc

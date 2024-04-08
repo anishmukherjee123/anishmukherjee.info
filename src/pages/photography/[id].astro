@@ -38,6 +38,9 @@ const images = await getAlbumImages(album.id);
     <h1 class="text-3xl xl:text-6xl font-bold">
       {album.data.title}
     </h1>
+    <h3 class="text-xl xl:text-3xl font-bold">
+      {album.data.date}
+    </h3>
     <p class="text-lg xl:text-2xl my-4">
       {album.data.description}
     </p>
@@ -46,14 +49,38 @@ const images = await getAlbumImages(album.id);
     >
       {
         images.map((image) => (
-          <Image
-            src={image}
-            alt={`Image from ${album.data.title} album`}
-            format="avif"
-            quality={50}
-            class="rounded mb-4 border border-transparent hover:border-gray-300 transition-all duration-300 ease-in-out hover:shadow-lg"
-            loading="lazy"
-          />
+          <>
+            <label for={`${image.src}-modal`}>
+              <Image
+                src={image}
+                alt={`Image from ${album.data.title} album`}
+                format="avif"
+                quality={50}
+                class="rounded mb-4 border border-transparent hover:border-gray-300 transition-all duration-300 ease-in-out hover:shadow-lg"
+                loading="lazy"
+              />
+            </label>
+            <input
+              type="checkbox"
+              id={`${image.src}-modal`}
+              class="modal-toggle"
+            />
+            <div class="modal" role="dialog">
+              <div class="modal-box w-11/12 max-w-5xl place-content-center p-8">
+                <Image
+                  src={image}
+                  alt={`Image from ${album.data.title} album`}
+                  format="avif"
+                  quality={100}
+                  class="rounded border border-transparent hover:border-gray-300 transition-all duration-300 ease-in-out hover:shadow-lg"
+                  loading="lazy"
+                />
+              </div>
+              <label class="modal-backdrop" for={`${image.src}-modal`}>
+                Close
+              </label>
+            </div>
+          </>
         ))
       }
     </div>

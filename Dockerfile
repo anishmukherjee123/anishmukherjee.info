@@ -13,7 +13,7 @@ RUN npm install
 RUN npm run build
 
 FROM nginx:1.25.4-alpine
-COPY --from=builder /website/build /usr/share/nginx/html
+COPY --from=builder /website/dist /usr/share/nginx/html
 # Override default nginx config
 RUN rm /etc/nginx/conf.d/default.conf
 COPY nginx.conf /etc/nginx/conf.d/default.conf
