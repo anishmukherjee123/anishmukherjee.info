@@ -1,0 +1,53 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { THEME, SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+
+const albums = await getCollection('albums');
+---
+
+<!doctype html>
+<html lang="en" data-theme={THEME}>
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <Header />
+    <main>
+      <div class="flex-1 flex-col min-h-screen p-8">
+        <h1 class="text-5xl font-bold text-center my-8">Photo Albums</h1>
+        <div class="divider"></div>
+        <div class="mx-auto container max-w-screen-sm grid grid-cols-2 gap-8">
+          {
+            albums.map((item) => (
+              <a
+                href={`/photography/${item.id}`}
+                class="group transition-all mb-4 block"
+              >
+                <Image
+                  src={item.data.cover}
+                  alt={item.data.title}
+                  format="avif"
+                  width={720}
+                  quality="mid"
+                  class:list={[
+                    'rounded-lg transition-all',
+                    'group-hover:shadow-lg group-hover:opacity-90'
+                  ]}
+                />
+                <div class="mt-4 text-center text-info-content">
+                  <strong class="font-bold">{item.data.title}</strong>
+                  <p class="text-xs">{item.data.description}</p>
+                </div>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+    </main>
+    <Footer />
+  </body>
+</html>

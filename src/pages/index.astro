@@ -2,44 +2,43 @@
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
-import { SITE_TITLE, SITE_DESCRIPTION } from '../consts';
+import { SITE_TITLE, SITE_DESCRIPTION, THEME } from '../consts';
 ---
 
 <!doctype html>
-<html lang="en" data-theme="retro">
+<html lang="en" data-theme={THEME}>
   <head>
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
   </head>
   <body>
-    <div class="flex flex-col flex-grow max-h-full justify-between bg-base-200">
-      <Header />
-      <main>
-        <div class="bg-base-100 p-10">
-          <h1 class="pe-4">Hey there! 👋🏽</h1>
-          <p>
-            I'm Anish, a DevOps engineer working at <a
-              href="https://www.wolterskluwer.com/en/solutions/uptodate"
-              >Wolters Kluwer</a
-            >, based out of Boston, MA.
-          </p>
-          <p>
-            I love making music, picking up new hobbies, and nerdy cloud
-            automation. This is a hub for sharing my thoughts, experiments, and
-            discoveries - both professional and personal.
-          </p>
-          <p>
-            This website is a WIP, so please bear with me as I continue to add
-            more content.
-          </p>
-          <p>
-            If you stumble across something interesting and want to chat, please
-            reach out at <a href="mailto:me@anishmukherjee.info"
-              >me@anishmukherjee.info</a
-            >. I'd love to hear from you!
-          </p>
-        </div>
-      </main>
-      <Footer />
-    </div>
+    <Header />
+    <main>
+      <section class="flex flex-col min-h-screen p-8">
+        <h1 class="text-5xl font-bold text-left mt-8">Hey there! 👋🏽</h1>
+        <div class="divider"></div>
+        <p>
+          I'm Anish, a DevOps engineer working at <a
+            href="https://www.wolterskluwer.com/en/solutions/uptodate"
+            >Wolters Kluwer</a
+          >, based out of Boston, MA.
+        </p>
+        <p>
+          I love making music, picking up new hobbies, and nerdy cloud
+          automation. This is a hub for sharing my thoughts, experiments, and
+          discoveries - both professional and personal.
+        </p>
+        <p>
+          This website is a WIP, so please bear with me as I continue to add
+          more content.
+        </p>
+        <p>
+          If you stumble across something interesting and want to chat, please
+          reach out at <a href="mailto:me@anishmukherjee.info"
+            >me@anishmukherjee.info</a
+          >. I'd love to hear from you!
+        </p>
+      </section>
+    </main>
+    <Footer />
   </body>
 </html>

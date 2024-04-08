@@ -3,3 +3,4 @@
 
 export const SITE_TITLE = 'anishmukherjee.info';
 export const SITE_DESCRIPTION = "Anish Mukherjee's personal website";
+export const THEME = 'garden';
