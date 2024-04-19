@@ -34,6 +34,25 @@ const images = await getAlbumImages(album.id);
     <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
   </head>
   <Header />
+
+  <script>
+    import PhotoSwipeLightbox from 'photoswipe/lightbox';
+    import 'photoswipe/style.css';
+
+    let lightbox: PhotoSwipeLightbox;
+
+    lightbox = new PhotoSwipeLightbox({
+      gallery: '#gallery--zoom-transition',
+      children: 'a',
+      showHideAnimationType: 'zoom',
+      imageClickAction: 'next',
+      tapAction: 'next',
+      pswpModule: () => import('photoswipe')
+    });
+
+    lightbox.init();
+  </script>
+
   <div class="flex-1 flex-col min-h-screen text-center my-16 mb-32">
     <h1 class="text-3xl xl:text-6xl font-bold">
       {album.data.title}
@@ -45,42 +64,26 @@ const images = await getAlbumImages(album.id);
       {album.data.description}
     </p>
     <div
-      class="mx-auto container my-8 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5"
+      id="gallery--zoom-transition"
+      class="pswp-gallery pswp-gallery-single-column mx-auto container my-8 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5"
     >
       {
         images.map((image) => (
-          <>
-            <label for={`${image.src}-modal`}>
-              <Image
-                src={image}
-                alt={`Image from ${album.data.title} album`}
-                format="avif"
-                quality={50}
-                class="rounded mb-4 border border-transparent hover:border-gray-300 transition-all duration-300 ease-in-out hover:shadow-lg"
-                loading="lazy"
-              />
-            </label>
-            <input
-              type="checkbox"
-              id={`${image.src}-modal`}
-              class="modal-toggle"
+          <a
+            href={image.src}
+            data-pswp-width={image.width}
+            data-pswp-height={image.height}
+            target="_blank"
+          >
+            <Image
+              src={image}
+              alt={`Image from ${album.data.title} album`}
+              format="avif"
+              quality={50}
+              class="rounded mb-4 border border-transparent hover:border-gray-300 transition-all duration-300 ease-in-out hover:shadow-lg"
+              loading="lazy"
             />
-            <div class="modal" role="dialog">
-              <div class="modal-box w-11/12 max-w-5xl place-content-center p-6">
-                <Image
-                  src={image}
-                  alt={`Image from ${album.data.title} album`}
-                  format="avif"
-                  quality={100}
-                  class="rounded border border-transparent hover:border-gray-300 transition-all duration-300 ease-in-out hover:shadow-lg"
-                  loading="lazy"
-                />
-              </div>
-              <label class="modal-backdrop" for={`${image.src}-modal`}>
-                Close
-              </label>
-            </div>
-          </>
+          </a>
         ))
       }
     </div>
