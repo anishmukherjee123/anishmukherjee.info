@@ -4,17 +4,45 @@ import HeaderTab from './HeaderTab.astro';
 
 <header>
   <div class="navbar bg-base-300">
-    <div class="flex-none">
-      <a href="/" class="btn btn-ghost text-xl hover:text-success"
-        >Anish Mukherjee</a
-      >
+    <div class="navbar-start">
+      <a class="btn btn-ghost text-xl" href="/">Anish Mukherjee</a>
     </div>
-    <div class="flex-auto">
-      <div role="tablist" class="tabs tabs-bordered px-3"></div>
-      <HeaderTab href="/">Home</HeaderTab>
-      <HeaderTab href="/blog">Blog</HeaderTab>
-      <HeaderTab href="/photography">Photography</HeaderTab>
-      <HeaderTab href="/about">About</HeaderTab>
+
+    <div class="navbar-center hidden lg:flex">
+      <div role="tablist" class="tabs tabs-bordered px-3">
+        <HeaderTab href="/">Home</HeaderTab>
+        <HeaderTab href="/blog">Blog</HeaderTab>
+        <HeaderTab href="/photography">Photography</HeaderTab>
+        <HeaderTab href="/about">About</HeaderTab>
+      </div>
+    </div>
+
+    <div class="navbar-end">
+      <div class="dropdown dropdown-end">
+        <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            ><path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 6h16M4 12h8m-8 6h16"></path></svg
+          >
+        </div>
+        <ul
+          tabindex="0"
+          class="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52"
+        >
+          <li><a href="/" class="text-neutral">Home</a></li>
+          <li><a href="/blog" class="text-neutral">Blog</a></li>
+          <li><a href="/photography" class="text-neutral">Photography</a></li>
+          <li><a href="/about" class="text-neutral">About</a></li>
+        </ul>
+      </div>
     </div>
   </div>
 </header>
