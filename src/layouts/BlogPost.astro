@@ -28,7 +28,8 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
           }
         </div>
         <div class="prose">
-          <div class="title">
+          <div class="title mt-5">
+            <h1>{title}</h1>
             <div class="date">
               <FormattedDate date={pubDate} />
               {
@@ -39,7 +40,6 @@ const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
                 )
               }
             </div>
-            <h1>{title}</h1>
             <hr />
           </div>
           <slot />

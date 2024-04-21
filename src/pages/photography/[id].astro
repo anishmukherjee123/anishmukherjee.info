@@ -1,6 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
-import { getAlbumImages } from '../../utils/albums';
+import { getAlbumImages } from '../../utils/collections';
 import { Image } from 'astro:assets';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
@@ -92,4 +92,6 @@ const images = await getAlbumImages(album.id);
     </p>
   </div>
   <Footer />
+
+  ../../utils/collections
 </html>

@@ -1,0 +1,216 @@
+---
+title: 'Configuring and Deploying the OpenTelemetry Collector with Helm (1/2)'
+description: 'This article will go over a minimal deploying the OpenTelemetry Collector Helm chart to a Kubernetes cluster.'
+pubDate: 'April 21, 2024'
+heroImage: '/otel-logo.jpg'
+---
+
+# Introduction
+
+This article will go over a minimal deploying the OpenTelemetry Collector Helm chart to a Kubernetes cluster. 
+OpenTelemetry *(OTel)* is an open source, vendor agnostic platform for collecting, processing, and exporting telemetry data,
+including logs, metrics, and traces. The OpenTelemetry Collector is the agent responsible for handling telemetry data
+end-to-end, and can be deployed with various configurations. For more information about the OTel project and collector, check out
+their [official documentation](https://opentelemetry.io/docs/collector/).
+
+## Prerequisites
+
+You will need the following:
+- A Kubernetes instance
+    - This can be a local cluster like Minikube, or a cloud provider like GKE, EKS, or AKS. For this article, I will be using [Minikube](https://minikube.sigs.k8s.io/docs/).
+- Kubectl
+    - This is the Kubernetes command line tool. You can install it by following the instructions [here](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+- Helm CLI
+    - Helm is a package manager for Kubernetes. You can install Helm by following the instructions [here](https://helm.sh/docs/intro/install/).
+
+# Configuring the Collector
+
+The first step is to decide on our configuration for the OTel Collector. All of our configuration will be done in 
+a `values.yaml` file, which will be passed to the OTel Collector Helm chart. The full schema and options for the chart can be 
+referenced [here](https://github.com/open-telemetry/opentelemetry-helm-charts/tree/main/charts/opentelemetry-collector).
+
+## Choosing a Deployment Mode
+
+In our `values.yaml` file, we will set our deployment mode using the following header:
+```yaml
+mode: "daemonset"
+```
+The valid options for this field are `daemonset`, `deployment`, and `statefulset`. Each of these options has a different use case:
+- `daemonset`: This ensures that a OTel Collector pod is running on each node, and **is the recommended deployment mode.** This is especially useful for cluster-wide log collection,
+    as the mechanism the OTel Collector uses to collect logs operates through mounting a volume from the node where the pod writes its `stdout` logs.
+    Therefore, if a collector pod is running on each node, all logs are guaranteed to be collected. However, there are particular metrics receivers,
+    such as the `k8s_cluster` receiver, that will return duplicate data if there are multiple collector pods running.
+- `statefulset`: This is a more performant option for monitoring resources that are not local to particular nodes, such as Services and Ingresses.
+    A `StatefulSet` will retain unique identifiers for each replica across restarts, and provides guarantees regarding the scheduling order of pods.
+    This is useful when leveraging persistent Kubernetes storage resources - for example, writing logs to a `PersistentVolumeClaim` that is mounted to external storage.
+- `deployment`: This is the most flexible option. `Deployments` are stateless, so they scale horizontally quickly and are easy to manage. This is a good option
+    for running one-off replicas designated for cluster-wide host metric collection.
+
+## Structure of the OTel Collector
+
+Before we dive into further configuring the collector, let's take a look at how the collector is structured. The OTel Collector
+utilizes three main components when processing telemetry data: **receivers**, **processors**, and **exporters**. Later in 
+the configuration, these three components will be combined in a pipeline to describe how telemetry data is processed end-to-end.
+
+### Receivers
+
+Receivers are responsible for ingesting telemetry data into the collector. They can be configured to collect logs, metrics, and traces.
+Common receivers include the `filelog` receiver which ingests data from log files, the `otlp` receiver which ingests logs, metrics, and 
+traces from an OTel protocol endpoint, and the `prometheus` receiver which ingests metrics from a Prometheus endpoint.
+
+### Processors 
+
+Processors transform telemetry data. Common processors include the `transform` processor which uses the `OTTL` language to
+filter sensitive data, add attributes, and more, and the `batch` processor which batches data before exporting, which is required
+by some exporters.
+
+### Exporters
+
+Exporters are responsible for sending telemetry data to external backends. Common exporters include the `otlp` exporter which
+sends `OTLP` formatted data to an endpoint, the `prometheus` exporter which sends metrics to a Prometheus endpoint, and more.
+Various APM vendors, such as Datadog, Honeycomb, Grafana Loki, and others offer exporters that send telemetry data to their platforms.
+
+
+## Presets
+
+On to configuration! These make life easy. The OTel Collector chart comes with a few built-in presets that can be used to quickly configure
+the collector for common use cases. Let's configure our `values.yaml` file with the following presets:
+```yaml
+presets:
+  # This enables pod log collection and ignores OTel Collector logs.
+  logsCollection:
+    enabled: true
+    includeCollectorLogs: false
+  # This enables host metric collection.
+  hostMetrics:
+    enabled: true
+  # This adds Kubernetes metadata to logs and metrics.
+  kubernetesAttributes:
+    enabled: true
+```
+
+With the presets above, the chart will automatically provision the necessary receivers and processors to collect 
+application logs and host metrics, while adding Kubernetes metadata to their attributes.
+
+## Main Configuration
+
+Now we're talking. Let's configure the parts of the collector that the presets didn't cover. We'll start by adding a simple exporter:
+```yaml
+config:
+    exporters:
+        debug:
+            verbosity: detailed
+```
+
+The `debug` exporter is a built-in exporter that logs telemetry data to the console. This is useful for debugging and testing purposes
+and will suffice for our example. Next, let's add a transform processor to add a custom attribute to our telemetry data. Now our config looks like:
+```yaml
+config:
+    exporters:
+        debug:
+            verbosity: detailed
+    processors:
+        transform:
+        log_statements:
+            - context: resource
+            statements:
+                - set(attributes["custom_attribute"] = "My Custom Value!")
+```
+The grammar of the `transform` processor is based on the `OTTL` language. Check out what else `OTTL` can do [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl)
+
+Normally, we would add a receiver to ingest telemetry data, but since we're using the `logsCollection` preset, the `filelog` receiver is already configured for us.
+
+Finally, let's add our logs and metrics pipelines to tie everything together:
+```yaml
+config:
+    exporters:
+        debug:
+            verbosity: detailed
+    processors:
+        transform:
+        log_statements:
+            - context: resource
+            statements:
+                - set(attributes["custom_attribute"] = "My Custom Value!")
+    service:
+        pipelines:
+            log:
+                receivers: [filelog] # This is already configured by the logsCollection preset
+                processors: [transform]
+                exporters: [debug]
+            metrics:
+                receivers: [hostmetrics] # This is already configured by the hostMetrics preset
+                processors: [transform]
+                exporters: [debug]
+```
+
+A quick note on defining exporters, processors, and receivers: we can use the same exporter with multiple configurations by 
+naming them separately. This opens the door to having separate configurations for different pipelines, which can be useful for
+sending different telemetry data to different backends. For example, if we wanted to have a second, less verbose
+`debug` exporter for our metrics, we can do so like this:
+```yaml
+config:
+    exporters:
+        debug:
+            verbosity: detailed
+        debug/less_verbose: {} # We define another exporter with a different name
+    processors:
+        transform:
+        log_statements:
+            - context: resource
+            statements:
+                - set(attributes["custom_attribute"] = "My Custom Value!")
+    service:
+        pipelines:
+            log:
+                receivers: [filelog] 
+                processors: [transform]
+                exporters: [debug]
+            metrics:
+                receivers: [hostmetrics] 
+                processors: [transform]
+                exporters: [debug/less_verbose] # Note that we have to update our pipeline as well
+```
+
+And that's it! We've configured the OTel Collector to collect logs and metrics, add a custom attribute to our telemetry data, and write log and metric data to `stdout`.
+Our final `values.yaml` file should look like this:
+```yaml
+mode: "daemonset"
+
+presets:
+  # This enables pod log collection and ignores OTel Collector logs.
+  logsCollection:
+    enabled: true
+    includeCollectorLogs: false
+  # This enables host metric collection.
+  hostMetrics:
+    enabled: true
+  # This adds Kubernetes metadata to logs and metrics.
+  kubernetesAttributes:
+    enabled: true
+
+config:
+    exporters:
+        debug:
+            verbosity: detailed
+        debug/less_verbose: {} 
+    processors:
+        transform:
+        log_statements:
+            - context: resource
+            statements:
+                - set(attributes["custom_attribute"] = "My Custom Value!")
+    service:
+        pipelines:
+            log:
+                receivers: [filelog] 
+                processors: [transform]
+                exporters: [debug]
+            metrics:
+                receivers: [hostmetrics] 
+                processors: [transform]
+                exporters: [debug/less_verbose] 
+```
+
+Stay tuned for the next article, where we will deploy this OTel Collector configuration to our Kubernetes cluster using Helm!
+
