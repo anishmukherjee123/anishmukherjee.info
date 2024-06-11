@@ -26,3 +26,6 @@ pnpm-debug.log*
 # ignore large images
 src/content/**/*.JPG
 src/content/**/*.jpeg
+
+# ignore firebase
+.firebase/
