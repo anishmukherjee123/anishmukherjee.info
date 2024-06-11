@@ -1,6 +1,6 @@
 ---
 title: 'Configuring and Deploying the OpenTelemetry Collector with Helm (1/2)'
-description: 'This article will go over a minimal deploying the OpenTelemetry Collector Helm chart to a Kubernetes cluster.'
+description: 'This article will go over a minimal deployment of the OpenTelemetry Collector Helm chart to a Kubernetes cluster.'
 pubDate: 'April 21, 2024'
 heroImage: '/otel-logo.jpg'
 ---
@@ -22,6 +22,8 @@ You will need the following:
     - This is the Kubernetes command line tool. You can install it by following the instructions [here](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
 - Helm CLI
     - Helm is a package manager for Kubernetes. You can install Helm by following the instructions [here](https://helm.sh/docs/intro/install/).
+- Docker
+    - You can find Docker installation instructions [here](https://docs.docker.com/engine/install/).
 
 # Configuring the Collector
 
@@ -97,24 +99,24 @@ application logs and host metrics, while adding Kubernetes metadata to their att
 Now we're talking. Let's configure the parts of the collector that the presets didn't cover. We'll start by adding a simple exporter:
 ```yaml
 config:
-    exporters:
-        debug:
-            verbosity: detailed
+  exporters:
+    debug:
+      verbosity: detailed
 ```
 
 The `debug` exporter is a built-in exporter that logs telemetry data to the console. This is useful for debugging and testing purposes
 and will suffice for our example. Next, let's add a transform processor to add a custom attribute to our telemetry data. Now our config looks like:
 ```yaml
 config:
-    exporters:
-        debug:
-            verbosity: detailed
-    processors:
-        transform:
-        log_statements:
-            - context: resource
-            statements:
-                - set(attributes["custom_attribute"] = "My Custom Value!")
+  exporters:
+    debug:
+      verbosity: detailed
+  processors:
+    transform:
+      log_statements:
+        - context: resource
+          statements:
+            - set(attributes["custom_attribute"],"My Custom Value!")
 ```
 The grammar of the `transform` processor is based on the `OTTL` language. Check out what else `OTTL` can do [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/pkg/ottl)
 
@@ -123,25 +125,25 @@ Normally, we would add a receiver to ingest telemetry data, but since we're usin
 Finally, let's add our logs and metrics pipelines to tie everything together:
 ```yaml
 config:
-    exporters:
-        debug:
-            verbosity: detailed
-    processors:
-        transform:
-        log_statements:
-            - context: resource
-            statements:
-                - set(attributes["custom_attribute"] = "My Custom Value!")
-    service:
-        pipelines:
-            log:
-                receivers: [filelog] # This is already configured by the logsCollection preset
-                processors: [transform]
-                exporters: [debug]
-            metrics:
-                receivers: [hostmetrics] # This is already configured by the hostMetrics preset
-                processors: [transform]
-                exporters: [debug]
+  exporters:
+    debug:
+      verbosity: detailed
+  processors:
+    transform:
+      log_statements:
+        - context: resource
+          statements:
+            - set(attributes["custom_attribute"],"My Custom Value!")
+  service:
+    pipelines:
+      logs:
+        receivers: [filelog] # This is already configured by the logsCollection preset
+        processors: [transform]
+        exporters: [debug]
+      metrics:
+        receivers: [hostmetrics] # This is already configured by the hostMetrics preset
+        processors: [transform]
+        exporters: [debug]
 ```
 
 A quick note on defining exporters, processors, and receivers: we can use the same exporter with multiple configurations by 
@@ -150,26 +152,26 @@ sending different telemetry data to different backends. For example, if we wante
 `debug` exporter for our metrics, we can do so like this:
 ```yaml
 config:
-    exporters:
-        debug:
-            verbosity: detailed
-        debug/less_verbose: {} # We define another exporter with a different name
-    processors:
-        transform:
-        log_statements:
-            - context: resource
-            statements:
-                - set(attributes["custom_attribute"] = "My Custom Value!")
-    service:
-        pipelines:
-            log:
-                receivers: [filelog] 
-                processors: [transform]
-                exporters: [debug]
-            metrics:
-                receivers: [hostmetrics] 
-                processors: [transform]
-                exporters: [debug/less_verbose] # Note that we have to update our pipeline as well
+  exporters:
+    debug:
+      verbosity: detailed
+    debug/less_verbose: {} # We define another exporter with a different name
+  processors:
+    transform:
+      log_statements:
+        - context: resource
+          statements:
+            - set(attributes["custom_attribute"],"My Custom Value!")
+  service:
+    pipelines:
+      logs:
+        receivers: [filelog] # This is already configured by the logsCollection preset
+        processors: [transform]
+        exporters: [debug]
+      metrics:
+        receivers: [hostmetrics] # This is already configured by the hostMetrics preset
+        processors: [transform]
+        exporters: [debug]
 ```
 
 And that's it! We've configured the OTel Collector to collect logs and metrics, add a custom attribute to our telemetry data, and write log and metric data to `stdout`.
@@ -190,26 +192,26 @@ presets:
     enabled: true
 
 config:
-    exporters:
-        debug:
-            verbosity: detailed
-        debug/less_verbose: {} 
-    processors:
-        transform:
-        log_statements:
-            - context: resource
-            statements:
-                - set(attributes["custom_attribute"] = "My Custom Value!")
-    service:
-        pipelines:
-            log:
-                receivers: [filelog] 
-                processors: [transform]
-                exporters: [debug]
-            metrics:
-                receivers: [hostmetrics] 
-                processors: [transform]
-                exporters: [debug/less_verbose] 
+  exporters:
+    debug:
+      verbosity: detailed
+    debug/less_verbose: {} # We define another exporter with a different name
+  processors:
+    transform:
+      log_statements:
+        - context: resource
+          statements:
+            - set(attributes["custom_attribute"],"My Custom Value!")
+  service:
+    pipelines:
+      logs:
+        receivers: [filelog] # This is already configured by the logsCollection preset
+        processors: [transform]
+        exporters: [debug]
+      metrics:
+        receivers: [hostmetrics] # This is already configured by the hostMetrics preset
+        processors: [transform]
+        exporters: [debug]
 ```
 
 Stay tuned for the next article, where we will deploy this OTel Collector configuration to our Kubernetes cluster using Helm!

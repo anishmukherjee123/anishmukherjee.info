@@ -1,0 +1,201 @@
+---
+title: 'Configuring and Deploying the OpenTelemetry Collector with Helm (2/2)'
+description: 'This article will go over a minimal deployment of the OpenTelemetry Collector Helm chart to a Kubernetes cluster.'
+pubDate: 'June 11, 2024'
+heroImage: '/otel-logo.jpg'
+---
+
+# Introduction
+
+This article picks up from a [previous post](https://anishmukherjee.info/blog/otel-collector) that
+detailed configuring the OpenTelemetry *(OTel)* Collector with a minimal config for collecting and
+exporting data. This time, we will cover applying our previous config to a Kubernetes cluster, and
+viewing logs of the OpenTelemetry Collector.
+
+## Prerequisites
+
+You will need the following:
+- A Kubernetes instance
+    - This can be a local cluster like Minikube, or a cloud provider like GKE, EKS, or AKS. For this article, I will be using [Minikube](https://minikube.sigs.k8s.io/docs/).
+- Kubectl
+    - This is the Kubernetes command line tool. You can install it by following the instructions [here](https://kubernetes.io/docs/tasks/tools/install-kubectl/).
+- Helm CLI
+    - Helm is a package manager for Kubernetes. You can install Helm by following the instructions [here](https://helm.sh/docs/intro/install/).
+- Docker
+    - You can find Docker installation instructions [here](https://docs.docker.com/engine/install/).
+
+## Setting up Minikube
+
+First things first, we need a cluster to deploy to. If you already have a cluster you are working with, please skip this section. If not, we need to spin up a minikube instance.
+
+Let's make sure we have docker installed and running:
+```bash
+docker --version && docker info
+```
+
+Depending on your installation, you may need to run the commands above as `sudo`. You can get around this by adding your user to the `docker` group:
+```bash
+sudo useradd -aG $USER docker
+```
+
+Next, let's create the cluster:
+```bash
+minikube start -p otel-demo
+```
+
+This will spin up a Kubernetes cluster in your docker instance called `otel-demo` and automatically
+set your `kubectl` context to point to it. To check out our new cluster, lets run:
+```bash
+kubectl get pods -A
+```
+This should return something like:
+```bash
+❯ kubectl get pods -A
+NAMESPACE     NAME                                READY   STATUS    RESTARTS     AGE
+kube-system   coredns-5d78c9869d-qqbp5            0/1     Running   0            35s
+kube-system   etcd-otel-demo                      1/1     Running   0            48s
+kube-system   kube-apiserver-otel-demo            1/1     Running   0            48s
+kube-system   kube-controller-manager-otel-demo   1/1     Running   0            48s
+kube-system   kube-proxy-nfn6s                    1/1     Running   0            35s
+kube-system   kube-scheduler-otel-demo            1/1     Running   0            48s
+kube-system   storage-provisioner                 1/1     Running   1 (5s ago)   46s
+```
+
+## Deploying Example Pod
+
+If we are working on observability, we need something to observe. Let's deploy a sample pod that
+generates some noise for us to view.
+
+We can deploy such a pod using the following command: (Thanks k8s.io!)
+```bash
+kubectl apply -f https://k8s.io/examples/debug/counter-pod.yaml
+```
+
+Wait a few seconds, and we should be able to see our new pod:
+```bash
+❯ kubectl get pods
+NAME      READY   STATUS    RESTARTS   AGE
+counter   1/1     Running   0          45s
+```
+
+This pod simply prints to `stdout` every second. We can view the logs of the pod with the following
+command:
+```bash
+kubectl logs counter --follow
+```
+
+You should see the output formatted similar to:
+```bash
+1: Tue Jun 11 04:38:36 UTC 2024
+2: Tue Jun 11 04:38:37 UTC 2024
+3: Tue Jun 11 04:38:38 UTC 2024
+4: Tue Jun 11 04:38:39 UTC 2024
+```
+
+Press CTRL + C to stop tailing the logs.
+
+## Deploying OTel Collector
+
+Finally, it's time to get cooking. 
+
+Let's make sure our `helm` installation is working by running:
+```bash
+helm version
+```
+
+Then, we need to add the OpenTelemetry repo to Helm:
+```bash
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+```
+
+If you followed along with the previous article, you should have a `values.yaml` on hand. Let's use
+this values file as the configuration for an installation of the OpenTelemetry Collector chart:
+```bash
+helm install otel-collector-demo open-telemetry/opentelemetry-collector \
+   --set image.repository="otel/opentelemetry-collector-k8s" \
+   -f values.yaml \
+```
+
+We can check if the chart successfully installed by listing installed charts:
+```bash
+❯ helm list -A
+NAME               	NAMESPACE	REVISION	UPDATED                             	STATUS  	CHART                         	APP VERSION
+otel-collector-demo	default  	1       	2024-06-11 00:52:37.587408 -0400 EDT	deployed	opentelemetry-collector-0.93.2	0.102.1
+```
+
+Now, if we get all of our pods, we should see an OTel collector pod:
+```bash
+❯ kubectl get pods
+NAME                                                      READY   STATUS    RESTARTS   AGE
+counter                                                   1/1     Running   0          27m
+otel-collector-demo-opentelemetry-collector-agent-v6l9b   1/1     Running   0          75s
+```
+
+Note that we get one pod here because this is a single-node cluster; our deployment type is a
+`daemonset`, which provisions one pod per node. 
+To see the YAML specification of the DaemonSet, we can run:
+
+```bash
+kubectl get daemonset otel-collector-demo-opentelemetry-collector-agent -oyaml
+```
+
+Finally, to see what the OTel collector is doing, let's tail it's logs:
+```bash
+kubectl logs otel-collector-demo-opentelemetry-collector-agent-v6l9b --follow
+```
+
+Note that you will have to replace the name of the pod with the randomly generated pod name on your
+Kubernetes instance.
+
+If all is well, we should see entries coming in every second that look like this:
+```bash
+Trace ID:
+Span ID:
+Flags: 0
+	{"kind": "exporter", "data_type": "logs", "name": "debug"}
+2024-06-11T05:06:13.401Z	info	LogsExporter	{"kind": "exporter", "data_type": "logs", "name": "debug", "resource logs": 1, "log records": 1}
+2024-06-11T05:06:13.401Z	info	ResourceLog #0
+Resource SchemaURL:
+Resource attributes:
+     -> k8s.container.name: Str(count)
+     -> k8s.namespace.name: Str(default)
+     -> k8s.pod.name: Str(counter)
+     -> k8s.container.restart_count: Str(0)
+     -> k8s.pod.uid: Str(93c26b4c-b26e-4a43-8919-c0d4ad140117)
+     -> k8s.pod.start_time: Str(2024-06-11T04:35:45Z)
+     -> k8s.node.name: Str(otel-demo)
+     -> custom_attribute: Str(My Custom Value!)
+ScopeLogs #0
+ScopeLogs SchemaURL:
+InstrumentationScope
+LogRecord #0
+ObservedTimestamp: 2024-06-11 05:06:13.303109085 +0000 UTC
+Timestamp: 2024-06-11 05:06:13.153295127 +0000 UTC
+SeverityText:
+SeverityNumber: Unspecified(0)
+Body: Str(1817: Tue Jun 11 05:06:13 UTC 2024
+)
+Attributes:
+     -> time: Str(2024-06-11T05:06:13.153295127Z)
+     -> log.file.path: Str(/var/log/pods/default_counter_93c26b4c-b26e-4a43-8919-c0d4ad140117/count/0.log)
+     -> log.iostream: Str(stdout)
+Trace ID:
+Span ID:
+Flags: 0
+	{"kind": "exporter", "data_type": "logs", "name": "debug"}
+```
+
+We are able to see this level of information because of the `detailed` verbosity level on the
+`debug` exporter. Note that we can also see our custom attribute!
+
+This means that the OTel collector is successfully pulling in logs from our `counter` pod, applying
+Kubernetes attribute labels, and exporting them. If we wanted to send this information to an APM
+vendor, we would *only* have to set up that vendor's exporter. The rest of our config would remain
+untouched.
+
+Let's clean up after ourselves by stopping our `minikube` cluster:
+```bash
+minikube stop --all
+```
+
+**Congrats! You now know how to configure and deploy the OpenTelemetry Collector using Helm.**
